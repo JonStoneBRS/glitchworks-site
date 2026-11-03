@@ -8,5 +8,6 @@
   "tebex": {
     "publicToken": "",
     "storeUrl": ""
-  }
+  },
+  "showCustomProjects": false
 }

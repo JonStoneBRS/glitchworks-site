@@ -26,7 +26,7 @@
 <header class="site-head"><div class="wrap">
 <a class="brand" href="../"><img src="../icon.svg" alt="" width="34" height="34"><span>GLITCHWORKS</span></a>
 <button class="search-btn" type="button" data-search-open aria-label="Search assets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sb-label">Search assets</span><kbd>Ctrl K</kbd></button>
-<nav class="nav" aria-label="Main"><a href="../" class="hide-sm">Home</a><a href="../store/" aria-current="page">Store</a><a href="../custom-projects/">Custom projects</a><a href="../help/">Help</a></nav>
+<nav class="nav" aria-label="Main"><a href="../" class="hide-sm">Home</a><a href="../store/" aria-current="page">Store</a><a href="../help/">Help</a></nav>
 </div></header>
 <div class="search-dlg" id="search" hidden role="dialog" aria-modal="true" aria-label="Search"><div class="search-box"><div class="search-inner">
 <div class="search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="search-input" type="search" placeholder="Search MLOs, scripts, weapons..." autocomplete="off" role="combobox" aria-controls="search-results" aria-expanded="true"><kbd>Esc</kbd></div>
@@ -51,18 +51,18 @@
 <div class="thumb"><img src="../img/u/stretcher-render-640.webp" alt="" loading="lazy" decoding="async" width="640" height="360"></div>
 <div class="body"><span class="tag">Script &middot; LAS</span><h3>Ambulance Stretcher</h3><p>A powered cot for ambulance crews, legs up or folded.</p>
 <div class="meta"><span class="badge b-dev">In development</span></div></div></a></div>
-<p class="empty" id="empty" hidden>Nothing on sale here yet. Take a look at our <a href="../custom-projects/">custom projects</a> in the meantime.</p></div></section>
+<p class="empty" id="empty" hidden>Nothing here yet. Join our <a href="https://discord.gg/kXUr828HMg">Discord</a> to hear when it lands.</p></div></section>
 <script>
 (function(){var b=document.querySelectorAll(".filters button"),c=document.querySelectorAll("#list .card"),e=document.getElementById("empty"),st={cat:"all",svc:"all"};
 function apply(){var n=0;b.forEach(function(x){x.setAttribute("aria-pressed",st[x.dataset.g]===x.dataset.f)});c.forEach(function(x){var s=(st.cat==="all"||x.dataset.cat===st.cat)&&(st.svc==="all"||(" "+x.dataset.svc+" ").indexOf(" "+st.svc+" ")>-1);x.hidden=!s;if(s)n++});e.hidden=n>0;
 var q=[];if(st.cat!=="all")q.push("cat="+st.cat);if(st.svc!=="all")q.push("svc="+st.svc);try{history.replaceState(null,"",q.length?"?"+q.join("&"):location.pathname)}catch(_){}}
 b.forEach(function(x){x.addEventListener("click",function(){st[x.dataset.g]=x.dataset.f;apply()})});
-var p=new URLSearchParams(location.search);if(p.get("cat"))st.cat=p.get("cat");if(p.get("svc"))st.svc=p.get("svc");apply()})();
+var p=new URLSearchParams(location.search);["cat","svc"].forEach(function(g){var v=(p.get(g)||"").toLowerCase();b.forEach(function(x){if(v&&x.dataset.g===g&&x.dataset.f.toLowerCase()===v)st[g]=x.dataset.f})});apply()})();
 </script>
 </main>
 <footer class="site-foot"><div class="wrap">
 <div>&copy; 2026 Glitchworks. Built properly, tested on live servers.<br>Purchases are processed by Tebex, our merchant of record. Not affiliated with Rockstar Games, Cfx.re or any emergency service.</div>
-<nav aria-label="Footer"><a href="../store/">Store</a><a href="../custom-projects/">Custom projects</a><a href="../help/">Help and FAQ</a><a href="https://discord.gg/kXUr828HMg">Join the Discord</a><a href="https://claude.ai/artifact/K8xGNw3JuFjMZJTTfvaCjZ">Terms</a><a href="https://claude.ai/artifact/7faoo9dZqrVsQBxGa3t6qK">Privacy</a></nav>
+<nav aria-label="Footer"><a href="../store/">Store</a><a href="../help/">Help and FAQ</a><a href="https://discord.gg/kXUr828HMg">Join the Discord</a><a href="https://claude.ai/artifact/K8xGNw3JuFjMZJTTfvaCjZ">Terms</a><a href="https://claude.ai/artifact/7faoo9dZqrVsQBxGa3t6qK">Privacy</a></nav>
 </div></footer>
 </body>
 </html>

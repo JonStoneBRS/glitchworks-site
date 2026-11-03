@@ -171,6 +171,9 @@ async function processImages(item) {
     }
   }
 }
+// Custom projects stay private unless config.json has "showCustomProjects": true.
+const SHOW_PROJECTS = cfg.showCustomProjects === true;
+if (!SHOW_PROJECTS) projects.length = 0;
 for (const it of [...assets, ...projects]) await processImages(it);
 
 const order = { "for-sale": 0, "coming-soon": 1, "showcase": 2, "in-development": 3 };
@@ -184,7 +187,7 @@ const discordLabel = cfg.discordInvite ? "Join the Discord" : "Contact us";
 
 function page({ rel, title, desc, current, body, canonical, image }) {
   const full = title ? `${title} | ${cfg.siteName}` : `${cfg.siteName} | FiveM MLOs, scripts and weapons`;
-  const nav = [["", "Home"], ["store/", "Store"], ["custom-projects/", "Custom projects"], ["help/", "Help"]];
+  const nav = [["", "Home"], ["store/", "Store"], ...(SHOW_PROJECTS ? [["custom-projects/", "Custom projects"]] : []), ["help/", "Help"]];
   return `<!doctype html>
 <html lang="en-GB" data-root="${rel}">
 <head>
@@ -225,7 +228,7 @@ ${body}
 </main>
 <footer class="site-foot"><div class="wrap">
 <div>&copy; ${new Date().getFullYear()} ${esc(cfg.siteName)}. Built properly, tested on live servers.<br>Purchases are processed by Tebex, our merchant of record. Not affiliated with Rockstar Games, Cfx.re or any emergency service.</div>
-<nav aria-label="Footer"><a href="${link(rel, "store/")}">Store</a><a href="${link(rel, "custom-projects/")}">Custom projects</a><a href="${link(rel, "help/")}">Help and FAQ</a><a href="${ticketHref(rel)}">${discordLabel}</a><a href="${esc(cfg.termsUrl || "#")}">Terms</a><a href="${esc(cfg.privacyUrl || "#")}">Privacy</a></nav>
+<nav aria-label="Footer"><a href="${link(rel, "store/")}">Store</a>${SHOW_PROJECTS ? `<a href="${link(rel, "custom-projects/")}">Custom projects</a>` : ""}<a href="${link(rel, "help/")}">Help and FAQ</a><a href="${ticketHref(rel)}">${discordLabel}</a><a href="${esc(cfg.termsUrl || "#")}">Terms</a><a href="${esc(cfg.privacyUrl || "#")}">Privacy</a></nav>
 </div></footer>
 </body>
 </html>`;
@@ -316,7 +319,7 @@ const write = async (p, html) => { const f = path.join(DIST, p); await fs.mkdir(
 <picture><source type="image/avif" srcset="img/banner-960.avif 960w, img/banner-1600.avif 1600w" sizes="100vw"><img src="img/banner-1600.webp" srcset="img/banner-960.webp 960w, img/banner-1600.webp 1600w" sizes="100vw" alt="Glitchworks" width="1600" height="670" fetchpriority="high"></picture>
 <div class="hero-text wrap"><h1 class="hero-title">FiveM assets, built properly</h1>
 <p class="lead">MLOs, scripts and weapons with real collision, proper logging and detail you notice. Every one is tested on a live server before it ships.</p>
-<div class="btns"><a class="btn btn-primary" href="${link(rel, "store/")}">Browse the store</a><a class="btn btn-ghost" href="${link(rel, "custom-projects/")}">See custom projects</a></div></div></div>
+<div class="btns"><a class="btn btn-primary" href="${link(rel, "store/")}">Browse the store</a>${SHOW_PROJECTS ? `<a class="btn btn-ghost" href="${link(rel, "custom-projects/")}">See custom projects</a>` : `<a class="btn btn-ghost" href="${ticketHref(rel)}">${discordLabel}</a>`}</div></div></div>
 <section><div class="wrap"><span class="eyebrow">What we make</span><h2>Pick a category</h2>
 <div class="cats" style="margin-top:22px">${CATS.map(c => `<a class="cat" href="${link(rel, "store/")}?cat=${c.key}">${ICONS[c.key]}<strong>${c.label}</strong><span>${c.blurb}</span></a>`).join("")}</div></div></section>
 <section style="padding-top:0"><div class="wrap"><span class="eyebrow">Shop by service</span><h2>Built for UK emergency services roleplay</h2>
@@ -344,19 +347,19 @@ ${featProjects.length ? `<section style="padding-top:0"><div class="wrap"><div c
 <div class="filters" role="group" aria-label="Filter by type"><button type="button" data-g="cat" data-f="all" aria-pressed="true">All types</button>${present.map(c => `<button type="button" data-g="cat" data-f="${c.key}" aria-pressed="false">${c.label}</button>`).join("")}</div>
 <div class="filters svc-filters" role="group" aria-label="Filter by service"><button type="button" data-g="svc" data-f="all" aria-pressed="true">All services</button>${SERVICES.map(sv => `<button type="button" data-g="svc" data-f="${sv.key}" aria-pressed="false" style="--svc:${sv.color}">${sv.label}</button>`).join("")}</div>
 <div class="grid" id="list">${assets.map((a, i) => card(rel, a, i < 3)).join("")}</div>
-<p class="empty" id="empty" hidden>Nothing on sale here yet. Take a look at our <a href="${link(rel, "custom-projects/")}">custom projects</a> in the meantime.</p></div></section>
+<p class="empty" id="empty" hidden>Nothing here yet. Join our <a href="${ticketHref(rel)}">Discord</a> to hear when it lands.</p></div></section>
 <script>
 (function(){var b=document.querySelectorAll(".filters button"),c=document.querySelectorAll("#list .card"),e=document.getElementById("empty"),st={cat:"all",svc:"all"};
 function apply(){var n=0;b.forEach(function(x){x.setAttribute("aria-pressed",st[x.dataset.g]===x.dataset.f)});c.forEach(function(x){var s=(st.cat==="all"||x.dataset.cat===st.cat)&&(st.svc==="all"||(" "+x.dataset.svc+" ").indexOf(" "+st.svc+" ")>-1);x.hidden=!s;if(s)n++});e.hidden=n>0;
 var q=[];if(st.cat!=="all")q.push("cat="+st.cat);if(st.svc!=="all")q.push("svc="+st.svc);try{history.replaceState(null,"",q.length?"?"+q.join("&"):location.pathname)}catch(_){}}
 b.forEach(function(x){x.addEventListener("click",function(){st[x.dataset.g]=x.dataset.f;apply()})});
-var p=new URLSearchParams(location.search);if(p.get("cat"))st.cat=p.get("cat");if(p.get("svc"))st.svc=p.get("svc");apply()})();
+var p=new URLSearchParams(location.search);["cat","svc"].forEach(function(g){var v=(p.get(g)||"").toLowerCase();b.forEach(function(x){if(v&&x.dataset.g===g&&x.dataset.f.toLowerCase()===v)st[g]=x.dataset.f})});apply()})();
 </script>`;
   await write("store/index.html", page({ rel, title: "Store", desc: "Browse Glitchworks FiveM MLOs, scripts and weapons.", current: "store/", body, canonical: "store/" }));
 }
 
 // Custom projects
-{
+if (SHOW_PROJECTS) {
   const rel = "../";
   const body = `<section style="padding-top:44px"><div class="wrap"><span class="eyebrow">Custom projects</span><h1>Built to order</h1>
 <p style="color:var(--muted);max-width:680px">Bespoke builds we've made for other servers. These aren't for sale, but they show what we can do. If you'd like something similar, start a bespoke order.</p>
@@ -413,7 +416,7 @@ for (const p of projects) await write(`custom-projects/${p.slug}/index.html`, de
 // 404, sitemap, robots, headers
 const ROOTPATH = new URL(cfg.siteUrl + "/").pathname.replace(/\/+$/, "/");
 await write("404.html", page({ rel: ROOTPATH, title: "Page not found", current: null, canonical: "404", body: `<section><div class="wrap" style="text-align:center"><span class="eyebrow">404</span><h1>That page glitched out</h1><p style="color:var(--muted)">It may have moved. Try the store instead.</p><a class="btn btn-primary" href="${ROOTPATH}store/">Go to the store</a></div></section>` }));
-const urls = ["", "store/", "custom-projects/", "help/", ...assets.map(a => `store/${a.slug}/`), ...projects.map(p => `custom-projects/${p.slug}/`)];
+const urls = ["", "store/", ...(SHOW_PROJECTS ? ["custom-projects/"] : []), "help/", ...assets.map(a => `store/${a.slug}/`), ...projects.map(p => `custom-projects/${p.slug}/`)];
 await write("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `<url><loc>${cfg.siteUrl}/${u}</loc></url>`).join("\n")}\n</urlset>\n`);
 await write("robots.txt", `User-agent: *\nAllow: /\nSitemap: ${cfg.siteUrl}/sitemap.xml\n`);
 await write(".nojekyll", "");

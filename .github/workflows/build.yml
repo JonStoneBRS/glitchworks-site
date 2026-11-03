@@ -23,4 +23,4 @@ jobs:
           git add -A docs
           git diff --cached --quiet && exit 0
           git commit -m "Rebuild website"
-          git pull --rebase && git push
+          git push || (git pull --rebase --autostash && git push)

@@ -1,0 +1,47 @@
+name: New website item
+on:
+  issues:
+    types: [opened, edited, labeled, closed, reopened]
+permissions:
+  contents: write
+  issues: write
+concurrency: { group: site, cancel-in-progress: false }
+jobs:
+  add:
+    # Only the repo owner can add items, and only through the New item form.
+    if: github.event.issue.user.login == github.repository_owner && contains(github.event.issue.labels.*.name, 'new-item')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - id: item
+        run: node tools/issue-to-item.mjs
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_STATE: ${{ github.event.issue.state }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: OUT=docs node build.mjs
+      - name: Publish
+        run: |
+          git config user.name "glitchworks-site-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A content docs
+          git diff --cached --quiet && exit 0
+          git commit -m "Website item: ${{ steps.item.outputs.slug }} (#${{ github.event.issue.number }})"
+          git pull --rebase && git push
+      - name: Reply with the link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const slug = '${{ steps.item.outputs.slug }}';
+            if ('${{ steps.item.outputs.removed }}' === '1') {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body: `Taken off the website. Reopen this issue to put it back.` });
+              return;
+            }
+            if (context.payload.issue.state === 'closed') return;
+            const pics = '${{ steps.item.outputs.pictures }}';
+            await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number,
+              body: `Done. It'll be live in about a minute:\nhttps://${context.repo.owner.toLowerCase()}.github.io/${context.repo.repo}/store/${slug}/\n\nPictures added: ${pics}. To change it, edit this issue. To take it off the website, close this issue.` });

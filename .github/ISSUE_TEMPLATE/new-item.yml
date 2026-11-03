@@ -1,0 +1,92 @@
+name: New website item
+description: Add a new item to the Glitchworks store. It goes live about two minutes after you submit.
+title: "New item: "
+labels: ["new-item"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill this in and press **Create**. The website builds the store page for you and posts the link back here.
+        To change an item later, open this issue, click **...** > **Edit**, change it and save. The page updates to match.
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      description: What it's called on the website.
+      placeholder: e.g. Taser 10
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options: [Script, MLO, Weapon]
+    validations:
+      required: true
+  - type: checkboxes
+    id: services
+    attributes:
+      label: Services
+      description: Which service is it for? Tick any that fit, or none.
+      options:
+        - label: Met
+        - label: LAS
+        - label: LFB
+        - label: Highways
+  - type: dropdown
+    id: status
+    attributes:
+      label: Status
+      options: [Coming soon, In development, Available, Showcase]
+    validations:
+      required: true
+  - type: input
+    id: tagline
+    attributes:
+      label: Short description
+      description: One line shown on the store card.
+      placeholder: e.g. A full Taser 10 with darts, laser and warning arc.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Full description
+      description: Shown on the item's own page. Leave a blank line between paragraphs.
+    validations:
+      required: true
+  - type: textarea
+    id: features
+    attributes:
+      label: Key features
+      description: One per line.
+      placeholder: |
+        10 darts with real spread
+        Laser and warning arc
+  - type: textarea
+    id: pictures
+    attributes:
+      label: Pictures
+      description: Drag pictures into this box (PNG or JPG). The first one is the cover.
+  - type: input
+    id: frameworks
+    attributes:
+      label: Frameworks
+      placeholder: e.g. Standalone, QBCore, Qbox, ESX
+  - type: input
+    id: price
+    attributes:
+      label: Price (optional)
+      description: Leave blank until you're selling. Numbers only, in pounds.
+      placeholder: e.g. 14.99
+  - type: input
+    id: video
+    attributes:
+      label: YouTube video (optional)
+      placeholder: https://www.youtube.com/watch?v=...
+  - type: checkboxes
+    id: featured
+    attributes:
+      label: Home page
+      options:
+        - label: Show this on the home page

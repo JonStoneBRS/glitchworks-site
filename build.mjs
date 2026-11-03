@@ -8,6 +8,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname);
+// Changes every build so browsers fetch fresh CSS and scripts after an update.
+const BUILD_ID = Date.now().toString(36);
 const DIST = process.env.OUT ? path.resolve(ROOT, process.env.OUT) : path.join(ROOT, "dist");
 const PREVIEW = process.argv.includes("--preview");
 const cfg = JSON.parse(await fs.readFile(path.join(ROOT, "config.json"), "utf8"));
@@ -207,9 +209,9 @@ function page({ rel, title, desc, current, body, canonical, image }) {
 <link rel="apple-touch-icon" href="${rel}img/icon-180.png">
 <link rel="preload" href="${rel}fonts/chakra-petch-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="${rel}fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="${rel}style.css">
-<script src="${rel}search-index.js" defer></script>
-<script src="${rel}fx.js" defer></script>
+<link rel="stylesheet" href="${rel}style.css?v=${BUILD_ID}">
+<script src="${rel}search-index.js?v=${BUILD_ID}" defer></script>
+<script src="${rel}fx.js?v=${BUILD_ID}" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>

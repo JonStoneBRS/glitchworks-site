@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://jonstonebrs.github.io/glitchworks-site/sitemap.xml

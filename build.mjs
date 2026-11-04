@@ -399,6 +399,44 @@ ${cfg.discordInvite ? `<a class="btn btn-primary" href="${esc(cfg.discordInvite)
   await write("help/index.html", page({ rel, title: "Help and FAQ", desc: "How buying from Glitchworks works, plus answers to common questions.", current: "help/", body, canonical: "help/" }));
 }
 
+// LCL Bot legal pages (linked from the LCL Bot app in the Discord Developer Portal)
+{
+  const rel = "../../";
+  const updated = "4 November 2026";
+  const legal = (title, intro, sections) => `<section style="padding-top:44px"><div class="wrap" style="max-width:860px"><span class="eyebrow">LCL Bot</span><h1>${title}</h1>
+<p style="color:var(--muted)">Last updated ${updated}</p>
+<p>${intro}</p>
+${sections.map(([h, items]) => `<h2 style="margin-top:30px">${h}</h2>${Array.isArray(items) ? `<ul>${items.map(i => `<li>${i}</li>`).join("")}</ul>` : `<p>${items}</p>`}`).join("\n")}
+<p style="margin-top:34px;color:var(--muted)">See also: <a href="${link(rel, title === "Terms of Service" ? "lcl-bot/privacy/" : "lcl-bot/terms/")}">${title === "Terms of Service" ? "Privacy Policy" : "Terms of Service"}</a></p>
+</div></section>`;
+  const terms = legal("Terms of Service",
+    "LCL Bot is the Discord bot for the London City Life community server. It is built and run by Glitchworks for London City Life. By using LCL Bot in the London City Life Discord, you agree to these terms.",
+    [
+      ["What LCL Bot does", ["Opens and manages support tickets, and saves ticket transcripts.", "Handles role requests, callsigns and community events.", "Helps staff keep the server safe: automatic moderation, checks on new members, a spam-catching channel and an AI safety check on suspicious messages.", "Gives staff moderation tools such as warnings, timeouts, bans and message clean-up."]],
+      ["Using it properly", ["Use the bot only as intended, within Discord's Terms of Service and Community Guidelines and the London City Life rules.", "Don't try to break, overload, trick or misuse the bot, its commands or its buttons.", "Don't use tickets to harass staff or other members, or to send spam."]],
+      ["Moderation", "Decisions about warnings, timeouts, kicks, bans, roles and refunds are made by London City Life staff, not by the bot. The bot only carries out what staff decide, apart from removing clear spam and scam links automatically. Appeals go through a ban appeal ticket."],
+      ["Availability", "We aim to keep LCL Bot running, but it is provided as it is, with no promise that it will always be available or free of errors. Features may change or be removed."],
+      ["Ending use", "London City Life staff can stop anyone using the bot, for example after a ban. You can stop using it at any time by leaving the server."],
+      ["Changes", "We may update these terms. The date at the top shows the latest version. Continuing to use the bot after a change means you accept the new terms."],
+      ["Contact", `Questions about these terms: open a ticket in the London City Life Discord, or contact Glitchworks through our <a href="${esc(cfg.discordInvite || "")}" rel="noopener">Discord</a>.`],
+    ]);
+  const privacy = legal("Privacy Policy",
+    "This policy explains what information LCL Bot keeps when you use the London City Life Discord, why, and for how long. LCL Bot is built and run by Glitchworks for London City Life.",
+    [
+      ["What we keep", ["Your Discord user ID, username, server nickname, account age and roles.", "Tickets you open: the form answers, messages and files in the ticket, and the transcript saved when it closes.", "Moderation records: warnings, timeouts, kicks, bans, strikes, staff notes and their reasons.", "Messages that trip a filter, the spam-catching channel or the AI safety check, with the reason they were flagged.", "Role requests, callsigns, event sign-ups and join check results."]],
+      ["What we don't keep", "LCL Bot does not read or store your direct messages to other people. It does not keep a copy of ordinary chat messages that don't trip a filter. It does not sell data or use it for advertising."],
+      ["AI safety check", "To catch scams, threats and similar problems, messages that a basic filter has already marked as suspicious may be sent to an AI service for a second check. Only those messages are sent, never your DMs, tickets or staff channels. The AI never bans or kicks anyone; a member of staff decides."],
+      ["Why we keep it", "To run support tickets, keep the community safe, enforce the server rules, and keep a fair record of staff decisions."],
+      ["How long we keep it", ["Ticket transcripts: 12 months, then deleted.", "Moderation records and staff notes: for as long as they are needed to enforce the rules, and reviewed at least once a year.", "Flagged messages: 90 days, unless they form part of a moderation record.", "Join check results: 90 days."]],
+      ["Who can see it", "London City Life staff, depending on their role. Staff complaints are visible to management only. The bot runs on a hosting provider that stores the data on our behalf, and Discord itself handles all messages under its own privacy policy."],
+      ["Your rights", "You can ask for a copy of the information LCL Bot holds about you, ask for something to be corrected, or ask for it to be deleted. Some moderation records may be kept where they are needed to enforce a ban. Open a ticket in the London City Life Discord to make a request."],
+      ["Changes", "We may update this policy. The date at the top shows the latest version."],
+      ["Contact", `Privacy questions: open a ticket in the London City Life Discord, or contact Glitchworks through our <a href="${esc(cfg.discordInvite || "")}" rel="noopener">Discord</a>.`],
+    ]);
+  await write("lcl-bot/terms/index.html", page({ rel, title: "LCL Bot Terms of Service", desc: "Terms of Service for LCL Bot, the London City Life Discord bot.", current: null, body: terms, canonical: "lcl-bot/terms/" }));
+  await write("lcl-bot/privacy/index.html", page({ rel, title: "LCL Bot Privacy Policy", desc: "Privacy Policy for LCL Bot, the London City Life Discord bot.", current: null, body: privacy, canonical: "lcl-bot/privacy/" }));
+}
+
 for (const a of assets) await write(`store/${a.slug}/index.html`, detail(a));
 for (const p of projects) await write(`custom-projects/${p.slug}/index.html`, detail(p));
 

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en-GB" data-root="../../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Install MLOs and scripts | Glitchworks</title>
+<meta name="description" content="How to download and install Glitchworks FiveM MLOs and scripts, plus fixes for common errors.">
+<link rel="canonical" href="https://jonstonebrs.github.io/glitchworks-site/help/install-mlos-and-scripts/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Install MLOs and scripts | Glitchworks">
+<meta property="og:description" content="How to download and install Glitchworks FiveM MLOs and scripts, plus fixes for common errors.">
+<meta property="og:image" content="https://jonstonebrs.github.io/glitchworks-site/img/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#07080d">
+<link rel="icon" href="../../icon.svg" type="image/svg+xml">
+<link rel="icon" href="../../favicon.png" sizes="48x48">
+<link rel="apple-touch-icon" href="../../img/icon-180.png">
+<link rel="preload" href="../../fonts/chakra-petch-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../style.css?v=mwc5msoy">
+<script src="../../search-index.js?v=mwc5msoy" defer></script>
+<script src="../../fx.js?v=mwc5msoy" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head"><div class="wrap">
+<a class="brand" href="../../"><img src="../../icon.svg" alt="" width="34" height="34"><span>GLITCHWORKS</span></a>
+<button class="search-btn" type="button" data-search-open aria-label="Search assets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sb-label">Search assets</span><kbd>Ctrl K</kbd></button>
+<nav class="nav" aria-label="Main"><a href="../../" class="hide-sm">Home</a><a href="../../store/">Store</a><a href="../../guard/"><span class="hide-sm">Glitch </span>Guard</a><a href="../../help/" aria-current="page">Help</a><a href="../../status/">Status</a></nav>
+</div></header>
+<div class="search-dlg" id="search" hidden role="dialog" aria-modal="true" aria-label="Search"><div class="search-box"><div class="search-inner">
+<div class="search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="search-input" type="search" placeholder="Search MLOs, scripts, weapons..." autocomplete="off" role="combobox" aria-controls="search-results" aria-expanded="true"><kbd>Esc</kbd></div>
+<ul id="search-results" role="listbox"></ul>
+<div class="search-foot"><span>&uarr; &darr; to move</span><span>Enter to open</span><span>Esc to close</span></div>
+</div></div></div>
+<main id="main">
+<div class="wrap">
+<p class="crumbs"><a href="../../help/">Help centre</a> / Install MLOs and scripts</p>
+<div class="doc">
+<aside class="toc"><nav data-toc aria-label="On this page"><strong>On this page</strong><ol><li><a href="#before-you-start">Before you start</a></li><li><a href="#buy">Buy through Tebex</a></li><li><a href="#download">Download from the Cfx.re portal</a></li><li><a href="#add-to-server">Add it to your server</a></li><li><a href="#server-cfg">Add it to server.cfg</a></li><li><a href="#game-build">Check the game build</a></li><li><a href="#config">Change the settings in config.lua</a></li><li><a href="#restart">Restart the server</a></li><li><a href="#clear-cache">Clear the FiveM cache</a></li><li><a href="#troubleshooting">Troubleshooting</a></li></ol></nav>
+<div class="toc-extra"><a class="btn btn-ghost btn-sm btn-block" href="https://discord.gg/kXUr828HMg" rel="noopener">Still stuck? Open a ticket</a></div></aside>
+<article class="doc-body">
+<span class="eyebrow">Guide</span><h1>Install MLOs and scripts</h1>
+<p class="lead">From checkout to your server in a few steps, plus fixes for the errors people run into most.</p>
+<section class="doc-sec" aria-labelledby="before-you-start"><h2 id="before-you-start">Before you start<a class="anchor" href="#before-you-start" aria-label="Link to this section">#</a></h2>
+<ul><li>Access to your FiveM server's files: the <code>resources</code> folder and <code>server.cfg</code>.</li><li>The Cfx.re account that owns your server key. Assets are tied to that account.</li><li>A few minutes to restart your server at the end.</li></ul></section>
+<section class="doc-sec" aria-labelledby="buy"><h2 id="buy">Buy through Tebex<a class="anchor" href="#buy" aria-label="Link to this section">#</a></h2>
+<p>Checkout is handled by Tebex. During checkout you log in with your <strong>Cfx.re account</strong>, and the purchase is linked to that account.</p>
+<p class="note">Use the same Cfx.re account that owns your server key. If you buy on a different account, your server can't run the asset and you'll see a "required entitlement" error.</p></section>
+<section class="doc-sec" aria-labelledby="download"><h2 id="download">Download from the Cfx.re portal<a class="anchor" href="#download" aria-label="Link to this section">#</a></h2>
+<p>Our paid assets are protected by Cfx's Asset Escrow, so you download them from Cfx rather than from us.</p>
+<ol><li>Go to <a href="https://portal.cfx.re" rel="noopener">portal.cfx.re</a> (formerly Keymaster) and sign in with the account you used at checkout.</li><li>Open <strong>Assets &gt; Granted Assets</strong>.</li><li>Find the item and download it. You'll get a zip file.</li></ol></section>
+<section class="doc-sec" aria-labelledby="add-to-server"><h2 id="add-to-server">Add it to your server<a class="anchor" href="#add-to-server" aria-label="Link to this section">#</a></h2>
+<ol><li><strong>Unzip</strong> the download. FiveM can't read zip files.</li><li>Put the folder inside your server's <code>resources</code> folder. We suggest a <code>[glitchworks]</code> subfolder to keep things tidy: <code>resources/[glitchworks]/resource_name</code>. Folders in square brackets are just for organising; FiveM still finds everything inside.</li><li>Check the folder name. It must match the resource name exactly. If your download added something like <code>-main</code> or <code>(1)</code> to the end, remove it.</li></ol></section>
+<section class="doc-sec" aria-labelledby="server-cfg"><h2 id="server-cfg">Add it to server.cfg<a class="anchor" href="#server-cfg" aria-label="Link to this section">#</a></h2>
+<p>Open <code>server.cfg</code> and add an <code>ensure</code> line for each resource, using the exact folder name. Anything it depends on must start <strong>before</strong> it.</p>
+<pre><code># Dependencies first (only if the product needs them and they aren't already started)
+ensure ox_lib
+ensure ox_target
+
+# Glitchworks
+ensure resource_name</code></pre>
+<p>Each product page and the install notes that come with it list its dependencies, for example <code>ox_lib</code> or <code>ox_target</code>.</p></section>
+<section class="doc-sec" aria-labelledby="game-build"><h2 id="game-build">Check the game build<a class="anchor" href="#game-build" aria-label="Link to this section">#</a></h2>
+<p>Many MLOs and some scripts need a newer game build. You set this in <code>server.cfg</code>:</p>
+<pre><code>sv_enforceGameBuild 3095</code></pre>
+<p>Builds such as 3095 or 3258 are common. <strong>Check each product page</strong> for the build it needs, and use that build or a newer one. Players download the matching game update the next time they join.</p></section>
+<section class="doc-sec" aria-labelledby="config"><h2 id="config">Change the settings in config.lua<a class="anchor" href="#config" aria-label="Link to this section">#</a></h2>
+<p>Config files are left open, even on escrowed assets, so you can set things up for your server. Open <code>config.lua</code> in a text editor such as VS Code or Notepad++ and change the values you need.</p>
+<p class="note">Keep the quotes, commas and brackets exactly as they are. One missing comma stops the resource starting. Your server console shows the line number if something is wrong.</p></section>
+<section class="doc-sec" aria-labelledby="restart"><h2 id="restart">Restart the server<a class="anchor" href="#restart" aria-label="Link to this section">#</a></h2>
+<p>Restart the <strong>whole server</strong>, not just the resource. MLOs and maps are streamed to players when they join, so restarting only the resource can leave interiors missing or broken until everyone reconnects.</p></section>
+<section class="doc-sec" aria-labelledby="clear-cache"><h2 id="clear-cache">Clear your FiveM cache<a class="anchor" href="#clear-cache" aria-label="Link to this section">#</a></h2>
+<p>If textures look wrong or an interior still shows the old version, clear your FiveM cache:</p>
+<ol><li>Close FiveM completely.</li><li>Press <kbd>Windows</kbd> + <kbd>R</kbd>, type <code>%localappdata%\FiveM\FiveM.app\data</code> and press Enter.</li><li>Delete the <code>cache</code>, <code>server-cache</code> and <code>server-cache-priv</code> folders. Leave <code>game-storage</code> alone, or FiveM will download the game files again.</li><li>Start FiveM and join the server.</li></ol></section>
+<section class="doc-sec" aria-labelledby="troubleshooting"><h2 id="troubleshooting">Troubleshooting<a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a></h2>
+<div class="tbl"><table><caption class="sr-only">Install problems and fixes</caption><thead><tr><th scope="col">What you see</th><th scope="col">What it means and how to fix it</th></tr></thead><tbody>
+<tr><td>"You lack the required entitlement"</td><td>The asset was bought on a different Cfx.re account, or your server key isn't linked to the same account that bought it. Use a server key from the buying account, or transfer the asset to the right account in the Cfx.re portal.</td></tr>
+<tr><td>"Couldn't find resource"</td><td>The folder name and the <code>ensure</code> line don't match. Check spelling and capitals, and remove any <code>-main</code> suffix from the folder.</td></tr>
+<tr><td>Interiors flicker or are missing</td><td>Another MLO is at the same location and the two are fighting, or your game build is too low. Remove or move the conflicting MLO and check <a href="#game-build">the game build</a>.</td></tr>
+<tr><td>"Oversized asset" warnings in the console</td><td>This is a warning, not an error. It's normal for detailed MLOs. Only worry if textures are also missing in game; if so, <a href="#clear-cache">clear your cache</a>.</td></tr>
+<tr><td>Falling through floors or walking through walls</td><td>The resource isn't streaming properly. Check it started without errors, <a href="#restart">restart the whole server</a> and check <a href="#game-build">the game build</a>.</td></tr>
+</tbody></table></div></section>
+<div class="band doc-band"><div><h2>Still stuck?</h2><p>Open a ticket on our Discord and tell us what you've tried. Screenshots of any errors help us sort it faster.</p></div><a class="btn btn-primary" href="https://discord.gg/kXUr828HMg" rel="noopener">Open a ticket on Discord</a></div>
+<p class="doc-more">More help: <a href="../../help/glitch-guard-setup/">Set up Glitch Guard</a> &middot; <a href="../../help/#faq">Common questions</a></p>
+</article></div></div>
+</main>
+<footer class="site-foot"><div class="wrap">
+<div>&copy; 2026 Glitchworks. Built properly, tested on live servers.<br>Purchases are processed by Tebex, our merchant of record. Not affiliated with Rockstar Games, Cfx.re or any emergency service.<br><a class="status-pill" href="../../status/" data-status-pill data-status-url="https://anagram-freeway-unveiling.ngrok-free.dev/status"><span class="sp-dot" aria-hidden="true"></span><span class="sp-text">System status</span></a></div>
+<nav aria-label="Footer"><a href="../../store/">Store</a><a href="../../guard/">Glitch Guard</a><a href="../../help/">Help and FAQ</a><a href="../../status/">Status</a><a href="https://discord.gg/kXUr828HMg">Join the Discord</a><a href="https://claude.ai/artifact/K8xGNw3JuFjMZJTTfvaCjZ">Terms</a><a href="https://claude.ai/artifact/7faoo9dZqrVsQBxGa3t6qK">Privacy</a></nav>
+</div></footer>
+</body>
+</html>

@@ -78,6 +78,183 @@
     });
   }
 
+  // Each extra feature runs on its own, so a problem in one never stops the others.
+  function safe(fn) { try { fn(); } catch (e) { if (window.console) console.warn(e); } }
+  var hasIO = "IntersectionObserver" in window;
+
+  /* ---------------- open a FAQ answer linked by #id ---------------- */
+  safe(function () {
+    function openHash() {
+      var id = "";
+      try { id = decodeURIComponent(location.hash.slice(1)); } catch (_) { return; }
+      var t = id && document.getElementById(id);
+      if (t && t.tagName === "DETAILS") t.open = true;
+    }
+    openHash();
+    window.addEventListener("hashchange", openHash);
+  });
+
+  /* ---------------- scroll progress line and hero parallax ---------------- */
+  safe(function () {
+    var head = document.querySelector(".site-head");
+    var prog = null;
+    if (head) {
+      prog = document.createElement("div");
+      prog.className = "scroll-prog";
+      prog.setAttribute("aria-hidden", "true");
+      head.appendChild(prog);
+    }
+    var layers = reduce ? [] : [].slice.call(document.querySelectorAll("[data-parallax]"));
+    var queued = false;
+    function update() {
+      queued = false;
+      var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+      var vh = window.innerHeight;
+      var max = document.documentElement.scrollHeight - vh;
+      if (prog) prog.style.transform = "scaleX(" + (max > 40 ? Math.min(1, y / max) : 0).toFixed(4) + ")";
+      for (var i = 0; i < layers.length; i++) {
+        var box = (layers[i].parentNode || layers[i]).getBoundingClientRect();
+        if (box.bottom < 0 || box.top > vh) continue;          // off screen: leave it
+        var p = Math.max(0, -box.top);                          // how far the hero has scrolled up
+        layers[i].style.transform = "translate3d(0," + (p * 0.22).toFixed(1) + "px,0) scale(" + (1 + Math.min(p, 900) * 0.00011).toFixed(4) + ")";
+      }
+    }
+    function queue() { if (!queued) { queued = true; requestAnimationFrame(update); } }
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    update();
+  });
+
+  /* ---------------- fade-and-rise reveals ---------------- */
+  // Content is visible by default. Only things below the fold are hidden, and only when
+  // JavaScript is running and the visitor hasn't asked for reduced motion.
+  safe(function () {
+    if (reduce || !hasIO) return;
+    var sel = "[data-reveal], main .section-head, main .grid > .card, main .cats > *, main .svcs > *, main .steps > *, main .band," +
+      " .feat-grid > *, .opt-grid > *, .hub-grid > *, .bots > *, .trust-grid > *, .trust-quote, .sg-points > *, .sg-checks > *, .limits, .gstep";
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var el = en.target;
+        io.unobserve(el);
+        el.classList.add("rv-in");
+        var d = parseInt(el.style.getPropertyValue("--rv-d"), 10) || 0;
+        // Tidy up afterwards so hover effects work as normal.
+        setTimeout(function () { el.classList.remove("rv", "rv-in"); el.style.removeProperty("--rv-d"); }, 1100 + d);
+      });
+    }, { rootMargin: "0px 0px -6% 0px", threshold: 0.06 });
+    var vh = window.innerHeight;
+    var target = null;   // the #section someone linked to: leave it where the browser expects it
+    try { target = location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null; } catch (_) {}
+    document.querySelectorAll(sel).forEach(function (el) {
+      if (el.closest(".story-stage")) return;
+      if (target && (el === target || el.contains(target))) return;
+      var r = el.getBoundingClientRect();
+      if (r.height && r.top < vh && r.bottom > 0) return;       // already on screen: never hide it
+      var i = el.parentNode ? [].indexOf.call(el.parentNode.children, el) : 0;
+      el.style.setProperty("--rv-d", (Math.min(i % 6, 5) * 70) + "ms");   // gentle stagger
+      el.classList.add("rv");
+      io.observe(el);
+    });
+  });
+
+  /* ---------------- "On this page" highlight ---------------- */
+  safe(function () {
+    var toc = document.querySelector("[data-toc]");
+    if (!toc) return;
+    var pairs = [];
+    [].forEach.call(toc.querySelectorAll('a[href^="#"]'), function (a) {
+      var t = document.getElementById(a.getAttribute("href").slice(1));
+      if (t) pairs.push([t, a]);
+    });
+    if (!pairs.length) return;
+    var active = null, queued = false;
+    // The active section is the last heading that has scrolled past the top third.
+    function spy() {
+      queued = false;
+      var line = window.innerHeight * 0.33, pick = null;
+      for (var i = 0; i < pairs.length; i++) if (pairs[i][0].getBoundingClientRect().top <= line) pick = pairs[i][1];
+      if (pick === active) return;
+      if (active) active.removeAttribute("aria-current");
+      if (pick) pick.setAttribute("aria-current", "location");
+      active = pick;
+    }
+    function queue() { if (!queued) { queued = true; requestAnimationFrame(spy); } }
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    spy();
+  });
+
+  /* ---------------- sticky feature story (Glitch Guard page) ---------------- */
+  safe(function () {
+    var story = document.querySelector("[data-story]");
+    if (!story) return;
+    var steps = [].slice.call(story.querySelectorAll("[data-step]"));
+    var vis = [].slice.call(story.querySelectorAll(".story-stage [data-vis]"));
+    var rail = story.querySelector(".story-rail i");
+    if (!steps.length) return;
+    story.classList.add("js");
+    var current = -1, queued = false;
+    function setStep(idx) {
+      if (idx === current) return;
+      current = idx;
+      var id = steps[idx].getAttribute("data-step");
+      steps.forEach(function (s, i) { s.classList.toggle("on", i === idx); });
+      vis.forEach(function (v) { v.classList.toggle("on", v.getAttribute("data-vis") === id); });
+      if (rail) rail.style.transform = "scaleY(" + ((idx + 1) / steps.length).toFixed(3) + ")";
+    }
+    // The chapter nearest the middle of the screen is the active one. Measured on each
+    // animation frame while scrolling, so fast scrolls and jumps never skip a chapter.
+    function pick() {
+      queued = false;
+      var mid = window.innerHeight / 2, best = 0, bestD = Infinity;
+      for (var i = 0; i < steps.length; i++) {
+        var r = steps[i].getBoundingClientRect();
+        var d = r.top > mid ? r.top - mid : r.bottom < mid ? mid - r.bottom : 0;
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      setStep(best);
+    }
+    function queue() { if (!queued) { queued = true; requestAnimationFrame(pick); } }
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    pick();
+  });
+
+  /* ---------------- live status pill (footer) ---------------- */
+  safe(function () {
+    var pill = document.querySelector("[data-status-pill]");
+    if (!pill) return;
+    var text = pill.querySelector(".sp-text");
+    function paint(d) {
+      if (!d || !Array.isArray(d.bots)) return;
+      var bots = d.bots.filter(function (b) { return b && b.name; });
+      if (!bots.length) return;
+      var up = bots.filter(function (b) { return b.online === true; }).length;
+      var st = up === bots.length ? "ok" : up === 0 ? "down" : "warn";
+      pill.setAttribute("data-state", st);
+      text.textContent = st === "ok" ? "All systems online" : st === "down" ? "Bots offline" : "Partial outage";
+    }
+    // The status page fetches the feed itself and shares the result.
+    document.addEventListener("gw:status", function (e) { paint(e.detail); });
+    if (document.querySelector("[data-status-page]") || !window.fetch || !window.JSON) return;
+    var url = pill.getAttribute("data-status-url");
+    if (!url) return;
+    var cached = null;
+    try { cached = JSON.parse(sessionStorage.getItem("gw-status") || "null"); } catch (_) {}
+    if (cached && cached.d && Date.now() - cached.t < 60000) { paint(cached.d); return; }
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+    fetch(url, { headers: { "ngrok-skip-browser-warning": "1" }, cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) {
+        paint(d);
+        try { sessionStorage.setItem("gw-status", JSON.stringify({ t: Date.now(), d: d })); } catch (_) {}
+      })
+      .catch(function () { /* stay quiet: the pill just keeps saying "System status" */ })
+      .then(function () { clearTimeout(timer); });
+  });
+
   /* ---------------- glitch cursor ---------------- */
   if (reduce || !window.matchMedia("(pointer: fine)").matches) return;
   var dot = document.createElement("div"), ringC = document.createElement("div"), ringM = document.createElement("div");

@@ -186,10 +186,14 @@ const link = (rel, p) => PREVIEW ? `${rel}${p}${p === "" || p.endsWith("/") ? "i
 const imgSrc = (rel, u, size) => typeof u === "string" ? u : `${rel}${u[size]}`;
 const ticketHref = rel => cfg.discordInvite || link(rel, "help/") + "#contact";
 const discordLabel = cfg.discordInvite ? "Join the Discord" : "Contact us";
+// Live bot status feed (public, no secrets) and the Glitch Guard invite link.
+const STATUS_URL = cfg.statusUrl || "";
+const GUARD_INVITE = cfg.guardInvite || "https://discord.com/oauth2/authorize?client_id=1569758234057773086&permissions=1426734836983&scope=bot%20applications.commands";
+const statusPill = rel => STATUS_URL ? `<a class="status-pill" href="${link(rel, "status/")}" data-status-pill data-status-url="${esc(STATUS_URL)}"><span class="sp-dot" aria-hidden="true"></span><span class="sp-text">System status</span></a>` : "";
 
-function page({ rel, title, desc, current, body, canonical, image }) {
+function page({ rel, title, desc, current, body, canonical, image, scripts = [] }) {
   const full = title ? `${title} | ${cfg.siteName}` : `${cfg.siteName} | FiveM MLOs, scripts and weapons`;
-  const nav = [["", "Home"], ["store/", "Store"], ...(SHOW_PROJECTS ? [["custom-projects/", "Custom projects"]] : []), ["help/", "Help"]];
+  const nav = [["", "Home"], ["store/", "Store"], ...(SHOW_PROJECTS ? [["custom-projects/", "Custom projects"]] : []), ["guard/", '<span class="hide-sm">Glitch </span>Guard'], ["help/", "Help"], ["status/", "Status"]];
   return `<!doctype html>
 <html lang="en-GB" data-root="${rel}">
 <head>
@@ -212,7 +216,7 @@ function page({ rel, title, desc, current, body, canonical, image }) {
 <link rel="stylesheet" href="${rel}style.css?v=${BUILD_ID}">
 <script src="${rel}search-index.js?v=${BUILD_ID}" defer></script>
 <script src="${rel}fx.js?v=${BUILD_ID}" defer></script>
-</head>
+${scripts.map(s => `<script src="${rel}${s}?v=${BUILD_ID}" defer></script>\n`).join("")}</head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-head"><div class="wrap">
@@ -229,8 +233,8 @@ function page({ rel, title, desc, current, body, canonical, image }) {
 ${body}
 </main>
 <footer class="site-foot"><div class="wrap">
-<div>&copy; ${new Date().getFullYear()} ${esc(cfg.siteName)}. Built properly, tested on live servers.<br>Purchases are processed by Tebex, our merchant of record. Not affiliated with Rockstar Games, Cfx.re or any emergency service.</div>
-<nav aria-label="Footer"><a href="${link(rel, "store/")}">Store</a>${SHOW_PROJECTS ? `<a href="${link(rel, "custom-projects/")}">Custom projects</a>` : ""}<a href="${link(rel, "help/")}">Help and FAQ</a><a href="${ticketHref(rel)}">${discordLabel}</a><a href="${esc(cfg.termsUrl || "#")}">Terms</a><a href="${esc(cfg.privacyUrl || "#")}">Privacy</a></nav>
+<div>&copy; ${new Date().getFullYear()} ${esc(cfg.siteName)}. Built properly, tested on live servers.<br>Purchases are processed by Tebex, our merchant of record. Not affiliated with Rockstar Games, Cfx.re or any emergency service.${STATUS_URL ? `<br>${statusPill(rel)}` : ""}</div>
+<nav aria-label="Footer"><a href="${link(rel, "store/")}">Store</a>${SHOW_PROJECTS ? `<a href="${link(rel, "custom-projects/")}">Custom projects</a>` : ""}<a href="${link(rel, "guard/")}">Glitch Guard</a><a href="${link(rel, "help/")}">Help and FAQ</a><a href="${link(rel, "status/")}">Status</a><a href="${ticketHref(rel)}">${discordLabel}</a><a href="${esc(cfg.termsUrl || "#")}">Terms</a><a href="${esc(cfg.privacyUrl || "#")}">Privacy</a></nav>
 </div></footer>
 </body>
 </html>`;
@@ -318,7 +322,7 @@ const write = async (p, html) => { const f = path.join(DIST, p); await fs.mkdir(
   const featured = assets.filter(a => a.featured).concat(assets.filter(a => !a.featured)).slice(0, 3);
   const featProjects = projects.filter(p => p.featured).slice(0, 2);
   const body = `<div class="hero">
-<picture><source type="image/avif" srcset="img/banner-960.avif 960w, img/banner-1600.avif 1600w" sizes="100vw"><img src="img/banner-1600.webp" srcset="img/banner-960.webp 960w, img/banner-1600.webp 1600w" sizes="100vw" alt="Glitchworks" width="1600" height="670" fetchpriority="high"></picture>
+<picture><source type="image/avif" srcset="img/banner-960.avif 960w, img/banner-1600.avif 1600w" sizes="100vw"><img src="img/banner-1600.webp" srcset="img/banner-960.webp 960w, img/banner-1600.webp 1600w" sizes="100vw" alt="Glitchworks" width="1600" height="670" fetchpriority="high" data-parallax></picture>
 <div class="hero-text wrap"><h1 class="hero-title">FiveM assets, built properly</h1>
 <p class="lead">MLOs, scripts and weapons with real collision, proper logging and detail you notice. Every one is tested on a live server before it ships.</p>
 <div class="btns"><a class="btn btn-primary" href="${link(rel, "store/")}">Browse the store</a>${SHOW_PROJECTS ? `<a class="btn btn-ghost" href="${link(rel, "custom-projects/")}">See custom projects</a>` : `<a class="btn btn-ghost" href="${ticketHref(rel)}">${discordLabel}</a>`}</div></div></div>
@@ -371,6 +375,67 @@ if (SHOW_PROJECTS) {
   await write("custom-projects/index.html", page({ rel, title: "Custom projects", desc: "Bespoke FiveM MLOs and scripts Glitchworks has built for other servers.", current: "custom-projects/", body, canonical: "custom-projects/" }));
 }
 
+// ---------- shared bits for the help centre, guides, Glitch Guard and status ----------
+const UI_PATHS = {
+  shield: '<path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/>',
+  shieldCheck: '<path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  wand: '<path d="m4 20 10-10"/><path d="M15 3v3M15 12v3M10.5 7.5h3M16.5 7.5h3M19 15v3M17.5 16.5h3"/>',
+  logs: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  verify: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+  bug: '<rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 3v4M4 9l4 2M20 9l-4 2M3 14h5M16 14h5M4 20l4-2M20 20l-4-2"/>',
+  ticket: '<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>',
+  wave: '<path d="M7 11V6.5a1.5 1.5 0 0 1 3 0V11M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12M16 10.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L3 15a1.6 1.6 0 0 1 2.5-2L7 14.5V11"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+  backup: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+  gavel: '<path d="m14 3 7 7M10.5 6.5l7 7M12 5 6.5 10.5l7 7L19 12M9 14l-6 6"/>',
+  data: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5.5 17a3.5 3.5 0 0 1 7 0M15 9h3M15 13h3"/>',
+  heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  bell: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>',
+  rules: '<path d="M9 5h11M9 12h11M9 19h11"/><path d="m3.5 5 1 1 2-2M3.5 12l1 1 2-2M3.5 19l1 1 2-2"/>',
+  eraser: '<path d="m7 21-4-4L14 6l6 6-9 9z"/><path d="M11 21h10M9.5 10.5l6 6"/>',
+  server: '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01M11 7.5h6M11 16.5h6"/>',
+  battery: '<rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2M11.5 9 9 12.5h3L9.5 16"/>',
+  refresh: '<path d="M20 11a8 8 0 0 0-14.3-4.3L4 9M4 4v5h5M4 13a8 8 0 0 0 14.3 4.3L20 15M20 20v-5h-5"/>',
+  book: '<path d="M4 19V5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2 2 2 0 0 0 2 2h14"/><path d="M8 7h8"/>',
+  box: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+  cart: '<path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>',
+  question: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.5v.7M12 17h.01"/>',
+  pulse: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+  chat: '<path d="M4 5h16v11H9l-5 4z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+};
+const ic = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${UI_PATHS[name] || UI_PATHS.shield}</svg>`;
+// Heading with a "#" link so people can share a link to that exact section.
+const anchored = (tag, id, html) => `<${tag} id="${id}">${html}<a class="anchor" href="#${id}" aria-label="Link to this section">#</a></${tag}>`;
+const guardButton = (label = "Add Glitch Guard to your server", cls = "btn btn-primary") => `<a class="${cls}" href="${esc(GUARD_INVITE)}" rel="noopener">${ic("plus")}${label}</a>`;
+const HELP_GUIDES = [
+  { slug: "glitch-guard-setup", title: "Set up Glitch Guard", icon: "shieldCheck", blurb: "Add the free bot, run /setup and pick the right options for each of the 10 steps.", keys: "discord bot setup wizard settings safeguarding verification tickets protection honeypot logs partnership discount" },
+  { slug: "install-mlos-and-scripts", title: "Install MLOs and scripts", icon: "box", blurb: "Download from the Cfx.re portal, add the resource to your server and fix the common errors.", keys: "fivem install resources server.cfg ensure entitlement escrow game build keymaster portal cache troubleshooting" },
+];
+
+// Guide page: breadcrumb, sticky "On this page" contents and anchored sections.
+function guidePage({ slug, title, desc, intro, sections }) {
+  const rel = "../../";
+  const toc = sections.map(s => `<li><a href="#${s.id}">${esc(s.toc || s.title)}</a></li>`).join("");
+  const body = `<div class="wrap">
+<p class="crumbs"><a href="${link(rel, "help/")}">Help centre</a> / ${esc(title)}</p>
+<div class="doc">
+<aside class="toc"><nav data-toc aria-label="On this page"><strong>On this page</strong><ol>${toc}</ol></nav>
+<div class="toc-extra"><a class="btn btn-ghost btn-sm btn-block" href="${ticketHref(rel)}" rel="noopener">Still stuck? Open a ticket</a></div></aside>
+<article class="doc-body">
+<span class="eyebrow">Guide</span><h1>${esc(title)}</h1>
+<p class="lead">${intro}</p>
+${sections.map(s => `<section class="doc-sec" aria-labelledby="${s.id}">${anchored("h2", s.id, esc(s.title))}\n${s.html}</section>`).join("\n")}
+<div class="band doc-band"><div><h2>Still stuck?</h2><p>Open a ticket on our Discord and tell us what you've tried. Screenshots of any errors help us sort it faster.</p></div><a class="btn btn-primary" href="${ticketHref(rel)}" rel="noopener">Open a ticket on Discord</a></div>
+<p class="doc-more">More help: ${HELP_GUIDES.filter(g => g.slug !== slug).map(g => `<a href="${link(rel, `help/${g.slug}/`)}">${esc(g.title)}</a>`).join(" &middot; ")} &middot; <a href="${link(rel, "help/")}#faq">Common questions</a></p>
+</article></div></div>`;
+  return page({ rel, title, desc, current: "help/", body, canonical: `help/${slug}/` });
+}
+
 // Help
 {
   const rel = "../";
@@ -383,20 +448,280 @@ if (SHOW_PROJECTS) {
     ["Can I get a refund?", "Contact us first and we'll do our best to fix any problem. Payments go through Tebex, so their checkout terms also apply."],
     ["Can I share or resell what I buy?", "No. Everything is licensed for use on your own servers only."],
   ];
-  const body = `<section style="padding-top:44px"><div class="wrap" style="max-width:860px"><span class="eyebrow">Help</span><h1>Help and FAQ</h1>
-<h2 style="margin-top:30px">How buying works</h2>
-<div class="steps" style="grid-template-columns:1fr;margin-bottom:40px">
+  const guardFaqs = [
+    ["Is Glitch Guard free?", "Yes. Glitch Guard is free for any Discord server. Add it with the button on the Glitch Guard page, then run /setup."],
+    ["Does Glitch Guard's safeguarding use AI?", "No. It's a rules-based system using word and pattern lists, so it's predictable and transparent. Server admins choose which checks are on, and it only ever alerts staff. It never punishes anyone for these."],
+    ["How do I change a setting after setup?", "Use /settings. You can change any of the 10 setup steps at any time."],
+  ];
+  const faqItem = ([q, a]) => `<details id="faq-${slugify(q)}"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`;
+  const hubCards = [
+    ...HELP_GUIDES.map(g => ({ href: link(rel, `help/${g.slug}/`), icon: g.icon, title: g.title, text: g.blurb, cta: "Read the guide" })),
+    { href: "#buying", icon: "cart", title: "Buying and downloads", text: "How checkout through Tebex works and where to find what you bought.", cta: "How buying works" },
+    { href: "#faq", icon: "question", title: "Common questions", text: "Accounts, escrow, frameworks, refunds and licences.", cta: "See the answers" },
+    { href: link(rel, "status/"), icon: "pulse", title: "Bot status", text: "Live status and uptime for the Glitchworks Bot and Glitch Guard.", cta: "Check status" },
+    { href: "#contact", icon: "chat", title: "Get in touch", text: "Support, bespoke orders and questions are handled through Discord tickets.", cta: "Contact us" },
+  ];
+  const body = `<section class="page-hero"><div class="ph-glow" data-parallax aria-hidden="true"></div><div class="wrap">
+<span class="eyebrow">Help centre</span><h1>How can we help?</h1>
+<p class="lead">Step-by-step guides for our FiveM assets and Glitch Guard, answers to common questions, and how to reach us.</p>
+<div class="btns"><button class="btn btn-ghost" type="button" data-search-open>${ic("search")}Search the site</button><a class="btn btn-ghost" href="${ticketHref(rel)}" rel="noopener">Open a ticket</a></div>
+</div></section>
+<section class="hub"><div class="wrap">
+<div class="hub-grid">${hubCards.map(c => `<a class="hub-card" href="${c.href}">${ic(c.icon)}<strong>${esc(c.title)}</strong><span>${esc(c.text)}</span><em>${esc(c.cta)} ${ic("arrow")}</em></a>`).join("")}</div>
+</div></section>
+<section style="padding-top:0"><div class="wrap"><div class="doc doc-hub">
+<aside class="toc"><nav data-toc aria-label="On this page"><strong>On this page</strong><ol>
+<li><a href="#buying">How buying works</a></li><li><a href="#faq">Questions</a></li><li><a href="#guard-faq">Glitch Guard questions</a></li><li><a href="#guides">Guides</a></li><li><a href="#contact">Get in touch</a></li>
+</ol></nav></aside>
+<div class="doc-body">
+<section class="doc-sec" aria-labelledby="buying">${anchored("h2", "buying", "How buying works")}
+<div class="steps" style="grid-template-columns:1fr;margin-bottom:12px">
 <div class="step"><h3>Buy through Tebex</h3><p>Tebex handles payment, tax and receipts for us. You'll log in with your FiveM account during checkout.</p></div>
 <div class="step"><h3>Download from Keymaster</h3><p>Your purchase appears in the Cfx Keymaster straight away.</p></div>
 <div class="step"><h3>Install</h3><p>Put the folder in your resources, add <code>ensure</code> lines to server.cfg in the order shown in the notes, then restart the server.</p></div>
 </div>
-<h2>Questions</h2>
-${faqs.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}
-<h2 id="contact" style="margin-top:40px">Get in touch</h2>
+<p><a href="${link(rel, "help/install-mlos-and-scripts/")}">Read the full install guide</a></p>
+</section>
+<section class="doc-sec" aria-labelledby="faq">${anchored("h2", "faq", "Questions")}
+${faqs.map(faqItem).join("")}
+</section>
+<section class="doc-sec" aria-labelledby="guard-faq">${anchored("h2", "guard-faq", "Glitch Guard questions")}
+${guardFaqs.map(faqItem).join("")}
+<p><a href="${link(rel, "help/glitch-guard-setup/")}">Read the Glitch Guard setup guide</a> or <a href="${link(rel, "guard/")}">see everything Glitch Guard does</a>.</p>
+</section>
+<section class="doc-sec" aria-labelledby="guides">${anchored("h2", "guides", "Guides")}
+<ul class="guide-list">${HELP_GUIDES.map(g => `<li><a href="${link(rel, `help/${g.slug}/`)}">${ic(g.icon)}<span><strong>${esc(g.title)}</strong><span>${esc(g.blurb)}</span></span></a></li>`).join("")}</ul>
+</section>
+<section class="doc-sec" aria-labelledby="contact">${anchored("h2", "contact", "Get in touch")}
 <p style="color:var(--muted)">Support, bespoke orders and questions are all handled through tickets in our Discord.</p>
 ${cfg.discordInvite ? `<a class="btn btn-primary" href="${esc(cfg.discordInvite)}" rel="noopener">Join the Discord</a>` : `<p><strong>Discord invite coming soon.</strong></p>`}
+</section>
+</div></div></div></section>`;
+  await write("help/index.html", page({ rel, title: "Help centre", desc: "Guides for installing Glitchworks FiveM assets and setting up Glitch Guard, plus answers to common questions.", current: "help/", body, canonical: "help/" }));
+}
+
+// Help guide: Set up Glitch Guard
+{
+  const step = (n, title, what, rec, choices) => `<div class="gstep" id="step-${n}"><h3><span class="n" aria-hidden="true">${n}</span>Step ${n}: ${title}</h3>
+<dl><dt>What it is</dt><dd>${what}</dd><dt>We recommend</dt><dd>${rec}</dd><dt>Your choices</dt><dd>${choices}</dd></dl></div>`;
+  const sections = [
+    { id: "add-the-bot", title: "Add Glitch Guard to your server", toc: "Add the bot", html: `<p>Glitch Guard is free. To add it you need the <strong>Manage Server</strong> permission on the Discord server you want to protect.</p>
+<p>${guardButton()}</p>
+<ol><li>Press the button above and choose your server from the list.</li><li>Discord shows the permissions Glitch Guard asks for. Leave them all ticked so every feature works.</li><li>Press <strong>Authorise</strong>. Glitch Guard joins your server straight away.</li></ol>` },
+    { id: "role-position", title: "Move its role near the top", toc: "Move its role up", html: `<p>Discord only lets a bot manage roles and members that sit <strong>below its own role</strong>. If Glitch Guard's role is near the bottom, it can't give people the Verified role, time out or ban raiders, or undo permission changes.</p>
+<ol><li>Open <strong>Server Settings &gt; Roles</strong>.</li><li>Find the <strong>Glitch Guard</strong> role and drag it up, above your member, Verified and staff roles. Just under your owner or admin roles is ideal.</li><li>Save the changes.</li></ol>
+<p class="note">Glitch Guard can never act on the server owner, whatever its role position. That's a Discord rule.</p>` },
+    { id: "run-setup", title: "Run /setup", toc: "Run /setup", html: `<p>Type <code>/setup</code> in any channel and press Enter. A step-by-step wizard walks you through 10 steps.</p>
+<p>Every step has a <strong>recommended</strong> button that creates everything for you, so if you're not sure, pick the recommended option and move on. Nothing is final: you can change any step later with <code>/settings</code>.</p>` },
+    { id: "the-10-steps", title: "The 10 steps explained", toc: "The 10 steps", html: `<p>Here's what each step does, what we recommend and what the choices mean.</p>
+${step(1, "Staff role", "The role your moderators have. People with it can see tickets and logs and use the moderation commands. Admins always can, whether or not they have the role.", "Pick your existing moderator role. If you don't have one yet, use the recommended button.", "Choose any role. Only give it to people you trust with tickets, logs and moderation.")}
+${step(2, "Roles and channels", "A starter set of roles and channels to suit your type of server. It only adds things and <strong>never deletes anything</strong>.", "Use the starter set if your server is new or still being built. You can rename or move anything afterwards.", "Pick the server type closest to yours to get a matching starter set, or skip this step if you're happy with your current layout.")}
+${step(3, "Logs channel", "A private channel that only staff can see. It records joins and leaves, deleted and edited messages, moderation actions, honeypot catches and ticket transcripts as PDFs.", "Turn it on. It's the easiest way to see what happened and when.", "Let Glitch Guard create the channel, or choose one you already have.")}
+${step(4, "Protection", "The automatic defences. Pick a level, then switch individual options on or off.", "<strong>Balanced</strong> suits most servers.", "<strong>Relaxed</strong> is the lightest touch, <strong>Strict</strong> is the tightest, and <strong>Balanced</strong> sits in between. Each option is explained below.")}
+<div class="tbl"><table><caption class="sr-only">Protection options</caption><thead><tr><th scope="col">Option</th><th scope="col">What it does</th></tr></thead><tbody>
+<tr><td>Anti-nuke</td><td>Stops mass deletes, bans and kicks.</td></tr>
+<tr><td>Permission guard</td><td>Undoes admin permissions given by untrusted people.</td></tr>
+<tr><td>Bot guard</td><td>Removes bots added by untrusted people.</td></tr>
+<tr><td>Anti-raid</td><td>Locks the server during join floods.</td></tr>
+<tr><td>Scam and phishing links</td><td>Deletes the message and bans the sender.</td></tr>
+<tr><td>Spam filter</td><td>Catches message spam.</td></tr>
+<tr><td>Mass-mention filter</td><td>Catches messages that mention 6 or more people.</td></tr>
+<tr><td>No links from brand-new members</td><td>Brand-new members can't post links.</td></tr>
+<tr><td>Block other servers' invites</td><td>Removes invite links to other Discord servers.</td></tr>
+<tr><td>Guard network ban list</td><td>Keeps out scammers and nukers already caught in other Glitch Guard servers.</td></tr>
+</tbody></table></div>
+${step(5, "Verification", "A <strong>#verify</strong> channel with a button. Pressing it gives the member the <strong>Verified</strong> role.", "Turn verification on. Lock the server too if you've had trouble with bots or raids.", "Optionally lock the server, so members who haven't verified can only see #verify.")}
+${step(6, "Honeypot", "A <strong>#do-not-post</strong> channel. Real members are told to leave it alone, so anything that posts there is almost certainly a bot, and it gets caught. Catches show in your logs.", "Turn it on. It costs nothing and catches spam bots early.", "On or off.")}
+${step(7, "Tickets", "A <strong>#support</strong> channel where members open private tickets. When a ticket closes, its transcript is saved as a PDF.", "Start with a preset. You can add more ticket types later with /settings.", "Pick presets or your own ticket types, and choose which teams can see each type.")}
+${step(8, "Welcome messages", "A message that greets people when they join.", "Turn it on if you'd like new members to feel welcome. It's optional.", "On or off.")}
+${step(9, "Safeguarding (optional)", `Rules-based checks that privately alert your senior team about worrying messages. It's not AI and it never punishes anyone. <a href="${link("../../", "guard/")}#safeguarding">How safeguarding works</a>.`, "Pick a small group of trusted senior roles to receive the alerts, and turn on the checks that fit your community.", "Choose the senior roles that get alerts (the owner always gets them), choose which checks are on, and set two switches: <strong>Remove details</strong> deletes personal details, a child's age and doxxing straight away (staff still get the alert), and <strong>Check staff</strong> also checks staff messages, which is useful for testing.")}
+${step(10, "Partnership (optional)", "Get your server listed in the Glitchworks Discord.", "Join if you'd like more people to find your server.", "Every Glitch Guard server gets a 5% store discount, and partners get 10%. Use <code>/discount</code> to get yours.")}` },
+    { id: "changing-later", title: "Changing things later: /settings", toc: "Changing things later", html: `<p>Use <code>/settings</code> at any time to change any of the 10 steps: add a ticket type, change your protection level, pick different safeguarding roles, and so on. You don't need to run the whole setup again.</p>` },
+    { id: "testing-safeguarding", title: "Testing safeguarding", toc: "Testing safeguarding", html: `<p>Staff aren't checked by default, so if you test from your own staff account, nothing happens. That's expected. To test, either:</p>
+<ul><li>turn on <strong>Check staff</strong> in <code>/settings</code> (and turn it off again when you're done), or</li><li>post from a non-staff account, such as a spare test account.</li></ul>
+<p>Use harmless test messages. For example, to test the personal details check, use a made-up mobile number from the 07700 900000 to 07700 900999 range, which Ofcom keeps aside for TV and drama.</p>` },
+    { id: "troubleshooting", title: "Troubleshooting", html: `<div class="tbl"><table><caption class="sr-only">Glitch Guard problems and fixes</caption><thead><tr><th scope="col">Problem</th><th scope="col">Fix</th></tr></thead><tbody>
+<tr><td>The bot can't manage roles, give the Verified role, time out or ban</td><td>Its role is too low. Open Server Settings &gt; Roles and drag the Glitch Guard role above the roles and members it needs to manage. <a href="#role-position">See how</a>.</td></tr>
+<tr><td>Slash commands like /setup are missing</td><td>Wait a minute, then restart Discord (Ctrl+R on desktop). If they still don't show, add the bot again with the button at the top of this guide. You don't need to remove it first.</td></tr>
+<tr><td>Safeguarding test alerts don't arrive</td><td>Staff aren't checked unless Check staff is on. Turn it on, or test from a non-staff account. <a href="#testing-safeguarding">More on testing</a>.</td></tr>
+<tr><td>New members can't see any channels</td><td>The server is locked for unverified members. They need to press the button in #verify. You can change this in Step 5 with /settings.</td></tr>
+</tbody></table></div>` },
+  ];
+  await write("help/glitch-guard-setup/index.html", guidePage({ slug: "glitch-guard-setup", title: "Set up Glitch Guard", desc: "Add the free Glitch Guard bot to your Discord server and set it up with /setup, step by step.", intro: "A plain-English walkthrough: add the bot, give it the right role position, then run <code>/setup</code> and choose what suits your server.", sections }));
+}
+
+// Help guide: Install MLOs and scripts
+{
+  const sections = [
+    { id: "before-you-start", title: "Before you start", html: `<ul><li>Access to your FiveM server's files: the <code>resources</code> folder and <code>server.cfg</code>.</li><li>The Cfx.re account that owns your server key. Assets are tied to that account.</li><li>A few minutes to restart your server at the end.</li></ul>` },
+    { id: "buy", title: "Buy through Tebex", html: `<p>Checkout is handled by Tebex. During checkout you log in with your <strong>Cfx.re account</strong>, and the purchase is linked to that account.</p>
+<p class="note">Use the same Cfx.re account that owns your server key. If you buy on a different account, your server can't run the asset and you'll see a "required entitlement" error.</p>` },
+    { id: "download", title: "Download from the Cfx.re portal", html: `<p>Our paid assets are protected by Cfx's Asset Escrow, so you download them from Cfx rather than from us.</p>
+<ol><li>Go to <a href="https://portal.cfx.re" rel="noopener">portal.cfx.re</a> (formerly Keymaster) and sign in with the account you used at checkout.</li><li>Open <strong>Assets &gt; Granted Assets</strong>.</li><li>Find the item and download it. You'll get a zip file.</li></ol>` },
+    { id: "add-to-server", title: "Add it to your server", html: `<ol><li><strong>Unzip</strong> the download. FiveM can't read zip files.</li><li>Put the folder inside your server's <code>resources</code> folder. We suggest a <code>[glitchworks]</code> subfolder to keep things tidy: <code>resources/[glitchworks]/resource_name</code>. Folders in square brackets are just for organising; FiveM still finds everything inside.</li><li>Check the folder name. It must match the resource name exactly. If your download added something like <code>-main</code> or <code>(1)</code> to the end, remove it.</li></ol>` },
+    { id: "server-cfg", title: "Add it to server.cfg", html: `<p>Open <code>server.cfg</code> and add an <code>ensure</code> line for each resource, using the exact folder name. Anything it depends on must start <strong>before</strong> it.</p>
+<pre><code># Dependencies first (only if the product needs them and they aren't already started)
+ensure ox_lib
+ensure ox_target
+
+# Glitchworks
+ensure resource_name</code></pre>
+<p>Each product page and the install notes that come with it list its dependencies, for example <code>ox_lib</code> or <code>ox_target</code>.</p>` },
+    { id: "game-build", title: "Check the game build", html: `<p>Many MLOs and some scripts need a newer game build. You set this in <code>server.cfg</code>:</p>
+<pre><code>sv_enforceGameBuild 3095</code></pre>
+<p>Builds such as 3095 or 3258 are common. <strong>Check each product page</strong> for the build it needs, and use that build or a newer one. Players download the matching game update the next time they join.</p>` },
+    { id: "config", title: "Change the settings in config.lua", html: `<p>Config files are left open, even on escrowed assets, so you can set things up for your server. Open <code>config.lua</code> in a text editor such as VS Code or Notepad++ and change the values you need.</p>
+<p class="note">Keep the quotes, commas and brackets exactly as they are. One missing comma stops the resource starting. Your server console shows the line number if something is wrong.</p>` },
+    { id: "restart", title: "Restart the server", html: `<p>Restart the <strong>whole server</strong>, not just the resource. MLOs and maps are streamed to players when they join, so restarting only the resource can leave interiors missing or broken until everyone reconnects.</p>` },
+    { id: "clear-cache", title: "Clear your FiveM cache", toc: "Clear the FiveM cache", html: `<p>If textures look wrong or an interior still shows the old version, clear your FiveM cache:</p>
+<ol><li>Close FiveM completely.</li><li>Press <kbd>Windows</kbd> + <kbd>R</kbd>, type <code>%localappdata%\\FiveM\\FiveM.app\\data</code> and press Enter.</li><li>Delete the <code>cache</code>, <code>server-cache</code> and <code>server-cache-priv</code> folders. Leave <code>game-storage</code> alone, or FiveM will download the game files again.</li><li>Start FiveM and join the server.</li></ol>` },
+    { id: "troubleshooting", title: "Troubleshooting", html: `<div class="tbl"><table><caption class="sr-only">Install problems and fixes</caption><thead><tr><th scope="col">What you see</th><th scope="col">What it means and how to fix it</th></tr></thead><tbody>
+<tr><td>"You lack the required entitlement"</td><td>The asset was bought on a different Cfx.re account, or your server key isn't linked to the same account that bought it. Use a server key from the buying account, or transfer the asset to the right account in the Cfx.re portal.</td></tr>
+<tr><td>"Couldn't find resource"</td><td>The folder name and the <code>ensure</code> line don't match. Check spelling and capitals, and remove any <code>-main</code> suffix from the folder.</td></tr>
+<tr><td>Interiors flicker or are missing</td><td>Another MLO is at the same location and the two are fighting, or your game build is too low. Remove or move the conflicting MLO and check <a href="#game-build">the game build</a>.</td></tr>
+<tr><td>"Oversized asset" warnings in the console</td><td>This is a warning, not an error. It's normal for detailed MLOs. Only worry if textures are also missing in game; if so, <a href="#clear-cache">clear your cache</a>.</td></tr>
+<tr><td>Falling through floors or walking through walls</td><td>The resource isn't streaming properly. Check it started without errors, <a href="#restart">restart the whole server</a> and check <a href="#game-build">the game build</a>.</td></tr>
+</tbody></table></div>` },
+  ];
+  await write("help/install-mlos-and-scripts/index.html", guidePage({ slug: "install-mlos-and-scripts", title: "Install MLOs and scripts", desc: "How to download and install Glitchworks FiveM MLOs and scripts, plus fixes for common errors.", intro: "From checkout to your server in a few steps, plus fixes for the errors people run into most.", sections }));
+}
+
+// Glitch Guard
+{
+  const rel = "../";
+  const mention = s => `<span class="m-mention">${s}</span>`;
+  const msg = inner => `<div class="mock-msg"><span class="mock-av">G</span><div class="mock-c"><span class="mock-who">Glitch Guard <em>APP</em></span>${inner}</div></div>`;
+  const VIS = {
+    setup: `<div class="mock"><div class="mock-top"><span class="mcmd">/setup</span></div>${msg(`<div class="embed"><b>Step 4 of 10: Protection</b><div class="mprog"><i style="width:40%"></i></div><p>Pick a protection level. You can switch individual options on or off next.</p><div class="seg"><span>Relaxed</span><span class="on">Balanced</span><span>Strict</span></div><div class="mbtns"><span class="mbtn g">Recommended</span><span class="mbtn">Next</span></div></div>`)}</div>`,
+    protect: `<div class="mock"><div class="mock-top">Protection options</div>${["Anti-nuke", "Permission guard", "Bot guard", "Anti-raid", "Scam and phishing links", "Mass-mention filter", "Guard network ban list"].map(o => `<div class="mrow"><span>${o}</span><span class="sw on"></span></div>`).join("")}</div>`,
+    safeguard: `<div class="mock"><div class="mock-top">Private alert &middot; senior team only</div>${msg(`<div class="embed" style="--ec:var(--warn)"><b>Safeguarding alert</b><p>A message in ${mention("#general")} may show a risk of self-harm.</p><p>Support numbers to share: Samaritans 116 123 &middot; Shout 85258 &middot; Childline 0800 1111</p><div class="mbtns"><span class="mbtn p">Go to message</span></div></div>`)}</div>`,
+    verify: `<div class="mock"><div class="mock-top"><span class="mock-ch">#</span>verify</div>${msg(`<div class="embed" style="--ec:var(--ok)"><b>Welcome! Verify to join in</b><p>Press the button to get the Verified role and see the rest of the server.</p><div class="mbtns"><span class="mbtn g">Verify</span></div></div>`)}<div class="mock-top mock-gap"><span class="mock-ch">#</span>do-not-post</div>${msg(`<div class="embed" style="--ec:var(--bad)"><b>Don't post here</b><p>This channel is a trap for bots. Anything that posts here gets caught.</p></div>`)}</div>`,
+    tickets: `<div class="mock"><div class="mock-top"><span class="mock-ch">#</span>support</div>${msg(`<div class="embed"><b>Need help?</b><p>Open a private ticket and the team will reply.</p><div class="mbtns"><span class="mbtn p">Open a ticket</span></div></div>`)}<div class="mock-top mock-gap"><span class="mock-ch">#</span>logs</div><div class="mrow"><span>Ticket closed</span><span class="mfile">transcript.pdf</span></div><div class="mrow"><span>Message deleted in ${mention("#general")}</span><span class="mtime">2m</span></div><div class="mrow"><span>Member joined</span><span class="mtime">5m</span></div></div>`,
+    backup: `<div class="mock"><div class="mock-top"><span class="mcmd">/backup restore</span></div>${msg(`<div class="embed" style="--ec:var(--violet)"><b>Backup ready to restore</b><div class="mrow"><span>Roles</span><span class="mok">&#10003;</span></div><div class="mrow"><span>Channels</span><span class="mok">&#10003;</span></div><div class="mrow"><span>Permissions</span><span class="mok">&#10003;</span></div></div>`)}<div class="mcmds">${["/warn", "/timeout", "/kick", "/ban", "/unban", "/purge", "/lockdown"].map(c => `<span class="mcmd">${c}</span>`).join("")}</div></div>`,
+  };
+  const STORY = [
+    { id: "setup", title: "Set up in ten guided steps", text: "Run <code>/setup</code> and Glitch Guard walks you through ten steps. Each one has a recommended button that creates everything for you.", points: ["A starter set of roles and channels for your type of server. It never deletes anything.", "Choose your staff role so moderators can see tickets and logs.", "Change any step later with <code>/settings</code>."] },
+    { id: "protect", title: "Protection that fits your server", text: "Pick Relaxed, Balanced (recommended) or Strict, then switch individual protections on or off.", points: ["Anti-nuke stops mass deletes, bans and kicks.", "Permission guard and bot guard undo risky changes made by untrusted people.", "Anti-raid locks the server during join floods, and scam links are deleted and the sender banned."] },
+    { id: "safeguard", title: "Safeguarding alerts for your senior team", text: "Rules-based checks spot text messages that suggest someone could be at risk, and privately alert only the senior roles you pick, plus the owner.", points: ["Not AI: predictable, transparent word and pattern lists.", "A \"Go to message\" button takes staff straight there.", "It never punishes anyone for these."] },
+    { id: "verify", title: "Verification and a honeypot for bots", text: "New members press a button in #verify to get the Verified role. A #do-not-post channel catches bots that post where real people never would.", points: ["Optionally lock the server so unverified members only see #verify.", "Honeypot catches are recorded in your logs."] },
+    { id: "tickets", title: "Tickets and private logs", text: "A #support channel opens private tickets for members. A private logs channel shows staff what happened and when.", points: ["Pick ticket presets or types, and which teams see each one.", "Ticket transcripts are saved as PDFs.", "Logs cover joins and leaves, deleted and edited messages, moderation actions and honeypot catches."] },
+    { id: "backup", title: "Backups and moderation tools", text: "Back up your roles, channels and permissions, and put them back with <code>/backup restore</code>.", points: ["Moderation commands: /warn, /timeout, /kick, /ban, /unban, /purge and /lockdown.", "Moderators with your staff role can use them. Admins always can."] },
+  ];
+  const FEATURES = [
+    ["wand", "Guided /setup", "Ten steps, each with a recommended option. Change anything later with /settings."],
+    ["logs", "Private logs channel", "Joins and leaves, deleted and edited messages, moderation actions, honeypot catches and ticket transcripts as PDFs."],
+    ["shieldCheck", "Protection levels", "Relaxed, Balanced (recommended) or Strict, with every option switchable."],
+    ["verify", "Verification", "A #verify button gives the Verified role. Optionally lock the server until people verify."],
+    ["bug", "Honeypot", "A #do-not-post channel that catches bots."],
+    ["ticket", "Tickets", "Private tickets from a #support channel, with PDF transcripts."],
+    ["wave", "Welcome messages", "Greet new members when they join."],
+    ["users", "Partner network", "Get listed in the Glitchworks Discord, plus a store discount with /discount."],
+    ["backup", "Backups", "Back up roles, channels and permissions. Put them back with /backup restore."],
+    ["gavel", "Moderation commands", "/warn, /timeout, /kick, /ban, /unban, /purge and /lockdown."],
+    ["data", "/mydata", "Helps members use their UK GDPR rights over the data Glitch Guard holds about them."],
+    ["heart", "Safeguarding", "Optional, rules-based alerts for your senior team. Never punishes anyone."],
+  ];
+  const PROTECT = [
+    ["Anti-nuke", "Stops mass deletes, bans and kicks."],
+    ["Permission guard", "Undoes admin permissions given by untrusted people."],
+    ["Bot guard", "Removes bots added by untrusted people."],
+    ["Anti-raid", "Locks the server during join floods."],
+    ["Scam and phishing links", "Deletes the message and bans the sender."],
+    ["Spam filter", "Catches message spam."],
+    ["Mass-mention filter", "Catches messages that mention 6 or more people."],
+    ["No links from brand-new members", "Brand-new members can't post links."],
+    ["Block other servers' invites", "Removes invite links to other Discord servers."],
+    ["Guard network ban list", "Keeps out scammers and nukers already caught in other Glitch Guard servers."],
+  ];
+  const CHECKS = [
+    ["Self-harm or suicide risk", `Staff get UK support numbers to share.<span class="helplines"><span>Samaritans 116 123</span><span>Shout 85258</span><span>Childline 0800 1111</span></span>`],
+    ["Grooming-style messages", "Secrecy, asking for pictures, moving the chat to other apps, or asking \"are you alone\"."],
+    ["Threats of violence", "Real-world threats of violence."],
+    ["Personal details", "People sharing UK mobile numbers, postcodes, street addresses or email addresses."],
+    ["Children sharing their age", "Messages such as \"I'm 13\" or \"I'm in Year 8\"."],
+    ["Doxxing", "Posting someone else's real name, address, number or school."],
+  ];
+  const body = `<section class="page-hero guard-hero"><div class="ph-glow" data-parallax aria-hidden="true"></div><div class="wrap">
+<span class="eyebrow">Glitch Guard &middot; Free</span>
+<h1>Security and safeguarding for any Discord server</h1>
+<p class="lead">Glitch Guard is our free Discord bot. A guided setup, protection against nukes, raids and scams, tickets, logs and backups, plus optional safeguarding alerts that help your team look out for people.</p>
+<div class="btns">${guardButton()}<a class="btn btn-ghost" href="${link(rel, "help/glitch-guard-setup/")}">Read the setup guide</a></div>
+<ul class="hero-facts"><li>Free for any server</li><li>Set up with <code>/setup</code></li><li>Rules-based safeguarding, not AI</li></ul>
+</div></section>
+<section class="story-sec"><div class="wrap">
+<div class="section-head"><div><span class="eyebrow">How it works</span><h2>What Glitch Guard does</h2></div></div>
+<div class="story" data-story>
+<div class="story-steps">${STORY.map((s, i) => `<article class="story-step" data-step="${s.id}">
+<div class="vis-inline" aria-hidden="true">${VIS[s.id]}</div>
+<span class="story-num">${String(i + 1).padStart(2, "0")} / ${String(STORY.length).padStart(2, "0")}</span>
+<h3>${s.title}</h3><p>${s.text}</p><ul class="ticks">${s.points.map(p => `<li>${p}</li>`).join("")}</ul>
+${s.id === "safeguard" ? `<p><a href="#safeguarding">How safeguarding works</a></p>` : ""}</article>`).join("\n")}</div>
+<div class="story-stage" aria-hidden="true"><div class="stage-frame">${STORY.map((s, i) => `<div class="vis${i === 0 ? " on" : ""}" data-vis="${s.id}">${VIS[s.id]}</div>`).join("")}<div class="story-rail"><i></i></div></div></div>
+</div></div></section>
+<section class="sg-wrap" id="safeguarding" aria-labelledby="sg-title"><div class="wrap"><div class="sg"><div class="sg-inner">
+<span class="eyebrow">Safeguarding</span><h2 id="sg-title">Helping your team look out for people</h2>
+<p class="sg-lead">Discord servers bring together people of all ages. Glitch Guard's optional safeguarding checks give your senior team a private heads-up when a message suggests someone could be at risk, so a real person can step in.</p>
+<div class="sg-points">
+<div class="sg-point">${ic("rules")}<h3>Not AI</h3><p>A rules-based system using word and pattern lists, so it's predictable and transparent. Server admins choose which checks are on.</p></div>
+<div class="sg-point">${ic("bell")}<h3>Private alerts, never punishment</h3><p>It watches text messages and privately alerts only the senior roles your server picks, plus the owner, with a "Go to message" button. It never punishes anyone for these.</p></div>
+<div class="sg-point">${ic("eraser")}<h3>Optional: Remove details</h3><p>With Remove details on, personal details, a child's age and doxxing are deleted straight away. Staff still get the alert.</p></div>
+</div>
+<h3>What it checks for</h3>
+<ul class="sg-checks">${CHECKS.map(([t, d]) => `<li><strong>${t}</strong><span>${d}</span></li>`).join("")}</ul>
+<div class="limits"><h3>Honest limits</h3><ul>
+<li><strong>Text only.</strong> It can't see images, GIFs, video or voice.</li>
+<li><strong>Pattern-based,</strong> so it can miss things or flag harmless messages.</li>
+<li><strong>A helping hand, not a replacement for a team.</strong></li>
+<li>Staff aren't checked unless <strong>Check staff</strong> is turned on (useful for testing).</li>
+</ul></div>
+</div></div></div></section>
+<section><div class="wrap">
+<div class="section-head"><div><span class="eyebrow">Protection</span><h2>Every protection option</h2></div><p>Choose Relaxed, Balanced or Strict, then switch any of these on or off.</p></div>
+<div class="opt-grid">${PROTECT.map(([t, d]) => `<div class="opt"><strong>${t}</strong><span>${d}</span></div>`).join("")}</div>
+</div></section>
+<section style="padding-top:0"><div class="wrap">
+<div class="section-head"><div><span class="eyebrow">Features</span><h2>What's included</h2></div><p>All free, all set up from one command.</p></div>
+<div class="feat-grid">${FEATURES.map(([i, t, d]) => `<div class="feat">${ic(i)}<h3>${t}</h3><p>${d}</p></div>`).join("")}</div>
+</div></section>
+<section style="padding-top:0"><div class="wrap"><div class="band"><div><span class="eyebrow">Free for any server</span><h2>Add Glitch Guard to your server</h2><p>Add the bot, move its role near the top and run <code>/setup</code>. The <a href="${link(rel, "help/glitch-guard-setup/")}">setup guide</a> explains every step.</p></div>${guardButton("Add Glitch Guard")}</div></div></section>`;
+  await write("guard/index.html", page({ rel, title: "Glitch Guard: free Discord security and safeguarding bot", desc: "Glitch Guard is a free Discord bot: guided setup, anti-nuke and anti-raid protection, verification, tickets, logs, backups and rules-based safeguarding alerts.", current: "guard/", body, canonical: "guard/" }));
+}
+
+// Status
+{
+  const rel = "../";
+  const BOTS = [
+    { name: "Glitchworks Bot", role: "Runs the Glitchworks Discord: the store, support tickets, product certificates and security." },
+    { name: "Glitch Guard", role: `Our free security and safeguarding bot for any Discord server. <a href="${link(rel, "guard/")}">About Glitch Guard</a>` },
+  ];
+  const WINDOWS = [["day", "24 hours"], ["week", "7 days"], ["month", "30 days"]];
+  const botCard = b => `<article class="bot-card" data-bot="${esc(b.name)}" data-state="unknown">
+<div class="bot-head"><span class="dot" aria-hidden="true"></span><div class="bot-id"><h2 class="bot-name">${esc(b.name)}</h2><p class="bot-role">${b.role}</p></div><span class="bot-state" data-f="state">Unknown</span></div>
+<div class="bot-up"><span class="bot-up-label" data-f="label">Up for</span><strong class="bot-up-fig" data-f="fig">&mdash;</strong><span class="bot-up-note" data-f="note"></span></div>
+<ul class="ut" aria-label="Uptime">${WINDOWS.map(([k, l]) => `<li data-w="${k}" data-empty><span class="ut-label">${l}</span><span class="ut-val">&mdash;</span><span class="ut-bar" aria-hidden="true"><i></i></span><span class="ut-note"></span></li>`).join("")}</ul>
+</article>`;
+  const TRUST = [
+    ["server", "Our own dedicated hardware", "Hosted on our own dedicated hardware in the UK, not shared cloud servers."],
+    ["battery", "Battery backup", "Battery backup keeps it running through power cuts."],
+    ["refresh", "Self-healing", "If a bot crashes or freezes, it's detected and restarted automatically, usually back within about a minute. Routine maintenance restarts take seconds."],
+    ["lock", "Private by design", "Connections are encrypted, and the status feed contains no customer or server data."],
+  ];
+  const body = `<section class="page-hero page-hero-sm"><div class="ph-glow" data-parallax aria-hidden="true"></div><div class="wrap">
+<span class="eyebrow">Status</span><h1>Bot status</h1>
+<p class="lead">Live status and uptime for the Glitchworks Discord bots. This page checks again every minute.</p>
+</div></section>
+<section class="st" data-status-page data-status-url="${esc(STATUS_URL)}"><div class="wrap">
+<noscript><style>.st-banner,.st-meta{display:none}</style><p class="st-noscript">Live status needs JavaScript. Turn it on to see whether our bots are online.</p></noscript>
+<div class="st-banner" data-banner data-state="loading"><span class="dot" aria-hidden="true"></span><div class="st-text" role="status" aria-live="polite" aria-atomic="true"><strong data-banner-title>Checking status&hellip;</strong><span class="st-sub" data-banner-sub>Getting the latest figures.</span></div></div>
+<div class="st-meta"><span data-checked>Not checked yet</span><span data-tracking></span><button class="btn btn-ghost btn-sm" type="button" data-refresh>${ic("refresh")}Check now</button></div>
+<div class="bots" data-bots>${BOTS.map(botCard).join("\n")}</div>
+</div></section>
+<section class="trust"><div class="wrap">
+<span class="eyebrow">Reliability</span><h2>How we keep them running</h2>
+<div class="trust-grid">${TRUST.map(([i, t, d]) => `<div class="trust-item">${ic(i)}<h3>${t}</h3><p>${d}</p></div>`).join("")}</div>
+<p class="trust-quote">Don't take our word for it: these uptime figures are live.</p>
 </div></section>`;
-  await write("help/index.html", page({ rel, title: "Help and FAQ", desc: "How buying from Glitchworks works, plus answers to common questions.", current: "help/", body, canonical: "help/" }));
+  await write("status/index.html", page({ rel, title: "Status", desc: "Live status and uptime of the Glitchworks Discord bots: Glitchworks Bot and Glitch Guard.", current: "status/", body, canonical: "status/", scripts: ["status.js"] }));
 }
 
 // LCL Bot legal pages (linked from the LCL Bot app in the Discord Developer Portal)
@@ -449,14 +774,21 @@ for (const p of projects) await write(`custom-projects/${p.slug}/index.html`, de
     u: link("", `${base}${it.slug}/`),
     i: it.imageUrls[0] ? (typeof it.imageUrls[0] === "string" ? "" : it.imageUrls[0].small) : "",
   });
-  const index = [...assets.map(a => entry(a, "store/")), ...projects.map(p => entry(p, "custom-projects/"))];
+  // Site pages and help guides, so Ctrl+K finds them too (listed after the assets).
+  const pages = [
+    { t: "Glitch Guard", d: "Free security and safeguarding bot for any Discord server.", c: "Discord bot", k: "discord bot security safeguarding anti-nuke anti-raid verification tickets logs backups moderation free", s: "Free", u: link("", "guard/"), i: "" },
+    { t: "Bot status", d: "Live status and uptime of the Glitchworks Discord bots.", c: "Status", k: "status uptime online offline outage glitchworks bot glitch guard", s: "Live", u: link("", "status/"), i: "" },
+    { t: "Help centre", d: "Guides, common questions and how to contact us.", c: "Help", k: "help faq support ticket contact refund buying download", s: "Help", u: link("", "help/"), i: "" },
+    ...HELP_GUIDES.map(g => ({ t: g.title, d: g.blurb, c: "Guide", k: g.keys, s: "Guide", u: link("", `help/${g.slug}/`), i: "" })),
+  ];
+  const index = [...assets.map(a => entry(a, "store/")), ...projects.map(p => entry(p, "custom-projects/")), ...pages];
   await write("search-index.js", "window.GW_INDEX=" + JSON.stringify(index) + ";");
 }
 
 // 404, sitemap, robots, headers
 const ROOTPATH = new URL(cfg.siteUrl + "/").pathname.replace(/\/+$/, "/");
 await write("404.html", page({ rel: ROOTPATH, title: "Page not found", current: null, canonical: "404", body: `<section><div class="wrap" style="text-align:center"><span class="eyebrow">404</span><h1>That page glitched out</h1><p style="color:var(--muted)">It may have moved. Try the store instead.</p><a class="btn btn-primary" href="${ROOTPATH}store/">Go to the store</a></div></section>` }));
-const urls = ["", "store/", ...(SHOW_PROJECTS ? ["custom-projects/"] : []), "help/", ...assets.map(a => `store/${a.slug}/`), ...projects.map(p => `custom-projects/${p.slug}/`)];
+const urls = ["", "store/", ...(SHOW_PROJECTS ? ["custom-projects/"] : []), "guard/", "help/", ...HELP_GUIDES.map(g => `help/${g.slug}/`), "status/", ...assets.map(a => `store/${a.slug}/`), ...projects.map(p => `custom-projects/${p.slug}/`)];
 await write("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `<url><loc>${cfg.siteUrl}/${u}</loc></url>`).join("\n")}\n</urlset>\n`);
 await write("robots.txt", `User-agent: *\nAllow: /\nSitemap: ${cfg.siteUrl}/sitemap.xml\n`);
 await write(".nojekyll", "");

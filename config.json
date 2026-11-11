@@ -5,6 +5,8 @@
   "termsUrl": "https://claude.ai/artifact/K8xGNw3JuFjMZJTTfvaCjZ",
   "privacyUrl": "https://claude.ai/artifact/7faoo9dZqrVsQBxGa3t6qK",
   "discordInvite": "https://discord.gg/kXUr828HMg",
+  "statusUrl": "https://anagram-freeway-unveiling.ngrok-free.dev/status",
+  "guardInvite": "https://discord.com/oauth2/authorize?client_id=1569758234057773086&permissions=1426734836983&scope=bot%20applications.commands",
   "tebex": {
     "publicToken": "",
     "storeUrl": ""

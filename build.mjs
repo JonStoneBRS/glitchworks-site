@@ -271,8 +271,9 @@ function buyPanel(rel, it) {
 <small>Open a "Bespoke order" ticket in our Discord with what you have in mind.</small></aside>`;
   if (it.status === "for-sale" && it.tebexId && cfg.tebex?.storeUrl) return `<aside class="panel"><span class="badge ${st.cls}" style="align-self:start">${st.label}</span>
 <div class="price">${esc(money(it.price, it.currency))}</div>${dl}
-<a class="btn btn-primary btn-block" href="${esc(cfg.tebex.storeUrl.replace(/\/$/, ""))}/package/${esc(it.tebexId)}" rel="noopener">Buy now</a>
-<small>Checkout is through Tebex. You'll log in with your FiveM account, and the asset appears in your Cfx Keymaster straight away.</small></aside>`;
+<a class="btn btn-primary btn-block" href="${esc(cfg.tebex.storeUrl.replace(/\/$/, ""))}/package/${esc(it.tebexId)}" rel="noopener" data-tebex-package="${esc(it.tebexId)}" data-tebex-token="${esc(cfg.tebex.publicToken || "")}">Buy now</a>
+<small id="checkout-msg" role="status" aria-live="polite"></small>
+<small>Pay right here. You'll log in with your FiveM account first, then the asset appears in your Cfx Keymaster straight away. Payments are processed by Tebex.</small></aside>`;
   return `<aside class="panel"><span class="badge ${st.cls}" style="align-self:start">${st.label}</span>${dl}
 <p style="margin:0">${it.status === "showcase" ? "Interested in this? Ask us about it." : "Not on sale yet. Join the Discord to hear first when it lands."}</p>
 <a class="btn btn-primary btn-block" href="${ticketHref(rel)}">${cfg.discordInvite ? "Ask on Discord" : "Get in touch"}</a></aside>`;
@@ -310,7 +311,7 @@ document.querySelectorAll(".thumbs button").forEach(b=>b.addEventListener("click
 document.querySelectorAll(".yt").forEach(y=>y.addEventListener("click",()=>{y.innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+y.dataset.id+'?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Video"></iframe>'},{once:true}));
 </script>`;
   const firstImg = imgs[0] && typeof imgs[0] !== "string" ? `${cfg.siteUrl}/${imgs[0].large}` : undefined;
-  return page({ rel, title: it.title, desc: it.tagline, current: base, body, canonical: `${base}${it.slug}/`, image: firstImg });
+  return page({ rel, title: it.title, desc: it.tagline, current: base, body, canonical: `${base}${it.slug}/`, image: firstImg, scripts: it.status === "for-sale" && it.tebexId && cfg.tebex?.publicToken ? ["checkout.js"] : [] });
 }
 
 // ---------- pages ----------

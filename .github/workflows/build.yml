@@ -1,9 +1,7 @@
 name: Rebuild website
 # Rebuilds docs/ whenever you edit content, settings or the design on GitHub.
+# Retired: the live site is glitchworks.uk. This repo now only serves a redirect from docs/.
 on:
-  push:
-    branches: [main]
-    paths: ["content/**", "src/**", "config.json", "build.mjs"]
   workflow_dispatch:
 permissions:
   contents: write
